@@ -8,13 +8,15 @@
 #include "Player.cpp"
 #include <string>
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 class Player_Ban_On_Death: public PlayerScript {
   protected: Player_Ban_On_Death(const char * name);
 
   public: Player_Ban_On_Death(): PlayerScript("Player_Ban_On_Death") {}
 
-  static void ThreadBan(Player * killed, char * text) {
+  static void ThreadBan(Player * killed, const std::string& text) {
     killed -> Say(text, (Language) 0, nullptr);
     std::string playerName = killed -> GetName();
     uint32_t playerClassId = killed -> GetClass();
@@ -36,14 +38,14 @@ class Player_Ban_On_Death: public PlayerScript {
   }
 
   void OnPVPKill(Player * killer, Player * killed) {
-    std::thread first(ThreadBan, killed, (char * )
-      "You killed me, blah!");
+    std::string deathMessage = GetDeathMessage();
+    std::thread first(ThreadBan, killed, deathMessage);
     first.detach();
   }
 
   void OnPlayerKilledByCreature(Creature * killer, Player * killed) {
-    std::thread first(ThreadBan, killed, (char * )
-      "It was good living, blah!");
+    std::string deathMessage = GetDeathMessage();
+    std::thread first(ThreadBan, killed, deathMessage);
     first.detach();
   }
 
@@ -63,6 +65,20 @@ class Player_Ban_On_Death: public PlayerScript {
         case 11: return "Druid";
         default: return "Unknown";  // Return "Unknown" for any class ID not in the list
     }
+  }
+
+  static std::string GetDeathMessage() {
+    std::vector<std::string> messages = 
+      {"Ouch, that was sharper than I thought...", 
+      "We will meet again... Mark my words!", 
+      "What is this, what are you doing my son!? Ughhh", 
+      "Dark times are upon us... very dark times..", 
+      "Leeroy Jenkins!"};
+    
+    std::srand(std::time(0));
+    int randomIndex = std::rand() % messages.size();
+
+    return messages[randomIndex];
   }
 };
 
